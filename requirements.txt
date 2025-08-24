@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+requests
+opencv-python
+mediapipe
+numpy
+supabase
+jinja2
+python-multipart
