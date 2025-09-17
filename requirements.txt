@@ -1,0 +1,10 @@
+fastapi # Construir a API principal
+uvicorn # Rodar o servidor da API
+sqlalchemy # Integração com banco relacional
+pydantic # Validar dados recebidos e enviados pela API
+requests # Enviar dados do captura.py para a API
+opencv-python # Capturar vídeo e processar imagens
+numpy # Manipular e calcular embeddings
+supabase # Manipular e calcular embeddings
+jinja2 # Gerar páginas HTML dinâmicas
+python-multipart # Permitir uploads e envio de formulários
