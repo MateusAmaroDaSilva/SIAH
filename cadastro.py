@@ -9,7 +9,7 @@ SUPABASE_URL = "https://bngwnknyxmhkeesoeizb.supabase.co"
 SUPABASE_KEY = "SEU_SUPABASE_KEY_AQUI"
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-SIMILARITY_THRESHOLD = 0.6
+SIMILARITY_THRESHOLD = 0.85
 app = FastAPI()
 
 def cosine_similarity(v1, v2):

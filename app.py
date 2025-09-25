@@ -1,23 +1,19 @@
 import uuid
-from fastapi import FastAPI, HTTPException, Query, Form
-from fastapi.responses import HTMLResponse, StreamingResponse, RedirectResponse
+from fastapi import FastAPI, HTTPException, Query, Form, Request
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from supabase import create_client, Client
 import base64
 import numpy as np
-from fastapi import FastAPI, HTTPException, Request  
-import os
 from numpy.linalg import norm
 
 SUPABASE_URL = "https://bngwnknyxmhkeesoeizb.supabase.co"
-SUPABASE_KEY = "SEU_SUPABASE_KEY_AQUI"
-SIMILARITY_THRESHOLD = 0.6
+SUPABASE_KEY = "SEU_SUPABASE_KEY_AQUI" 
+SIMILARITY_THRESHOLD = 0.85 
+EMBEDDINGS_DIR = "faces"
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 app = FastAPI(title="API de Reconhecimento Facial")
-
-SIMILARITY_THRESHOLD = 0.80 
-EMBEDDINGS_DIR = "embeddings"
 
 def normalize_vector(vec: np.ndarray) -> np.ndarray:
     norm_value = np.linalg.norm(vec)
@@ -32,7 +28,7 @@ class UserCreate(BaseModel):
     nome: str
     email: str
     cpf: str
-    embedding_path: str  
+    embedding_path: str
 
 class UserResponse(BaseModel):
     nome: str
@@ -40,7 +36,7 @@ class UserResponse(BaseModel):
     cpf: str
 
 class RecognizeRequest(BaseModel):
-    embedding: str  
+    embeddings: list[str] 
 
 class RecognizeResponse(BaseModel):
     nome: str
@@ -55,7 +51,7 @@ def cadastro(temp_file: str = Query(..., description="Arquivo temporário com em
         <head><title>Cadastro Usuário</title></head>
         <body>
             <h2>Usuário não reconhecido</h2>
-            <p>Temp File: {temp_file}</p>
+            <p>Arquivo temporário: {temp_file}</p>
             <p>Preencha o cadastro para registrar sua face.</p>
             <form action="/users/" method="post">
                 Nome: <input type="text" name="nome" required><br>
@@ -80,24 +76,55 @@ def create_user(
         existing = supabase.from_("usuarios").select("*").eq("cpf", cpf).execute()
         if existing.data:
             raise HTTPException(status_code=400, detail="Usuário já cadastrado")
+        
+        user_folder = f"{cpf}/"
 
-        download_bytes = supabase.storage.from_("faces").download(f"{temp_file}/embedding.bin")
-        new_path = f"{cpf}/embedding.bin"
+        files_in_temp = supabase.storage.from_("faces").list(temp_file) or []
+        
+        if files_in_temp:
+            paths_to_remove = [f"{temp_file}/{f['name']}" for f in files_in_temp]
+            supabase.storage.from_("faces").remove(paths_to_remove)
+            print(f"[INFO] Todos os arquivos da pasta temporária {temp_file} foram removidos.")
+        else:
+            print(f"[INFO] Nenhum arquivo na pasta temporária {temp_file}. Já está vazia.")
 
-        supabase.storage.from_("faces").upload(new_path, download_bytes)
+        for i, file_info in enumerate(files_in_temp, start=1):
+            file_name = file_info['name']
 
-        supabase.storage.from_("faces").remove([f"{temp_file}/embedding.bin"])
+            source_path = f"{temp_file}/{file_name}"
+            final_path = f"{user_folder}embedding_{i}.bin"
+
+            print(f"[INFO] Movendo {source_path} para {final_path}")
+
+            embedding_data = supabase.storage.from_("faces").download(source_path)
+
+            supabase.storage.from_("faces").upload(final_path, embedding_data)
+
+        files_in_temp = supabase.storage.from_("faces").list(temp_file)
+        if files_in_temp:
+            paths_to_remove = [f"{temp_file}/{f['name']}" for f in files_in_temp]
+            supabase.storage.from_("faces").remove(paths_to_remove)
+            print(f"[INFO] Arquivos temporários removidos: {paths_to_remove}")
+
+        try:
+            supabase.storage.from_("faces").remove([temp_file])
+            print(f"[INFO] Pasta temporária {temp_file} removida com sucesso.")
+        except Exception as e:
+            print(f"[WARN] Falha ao remover pasta temporária {temp_file}: {e}")
 
         supabase.from_("usuarios").insert({
             "nome": nome,
             "email": email,
             "cpf": cpf,
-            "embedding_path": new_path
+            "embedding_path": user_folder
         }).execute()
+
+        print(f"[INFO] Usuário {nome} cadastrado com sucesso e embeddings movidos!")
 
         return {"nome": nome, "email": email, "cpf": cpf}
 
     except Exception as e:
+        print(f"[ERROR] Falha ao criar usuário: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao criar usuário: {str(e)}")
 
 @app.get("/users/", response_model=list[UserResponse])
@@ -111,83 +138,50 @@ def list_users():
         } for u in res.data
     ]
 
-@app.post("/recognize/", response_model=RecognizeResponse)
-def recognize_user(request: RecognizeRequest):
-    try:
-        input_vec = np.frombuffer(base64.b64decode(request.embedding), dtype=np.float32)
-        res = supabase.from_("usuarios").select("*").execute()
-
-        best_match = {"nome": "Desconhecido", "email": None, "cpf": None, "similarity": 0.0}
-
-        for u in res.data:
-            try:
-                embedding_path = u["embedding_path"]
-                embedding_bytes = supabase.storage.from_("faces").download(embedding_path)
-                user_vec = np.frombuffer(embedding_bytes, dtype=np.float32)
-
-                sim = cosine_similarity(input_vec, user_vec)
-                if sim > best_match["similarity"]:
-                    best_match = {
-                        "nome": u["nome"],
-                        "email": u["email"],
-                        "cpf": u["cpf"],
-                        "similarity": float(sim)
-                    }
-            except Exception as e:
-                print(f"Erro ao processar embedding de {u['cpf']}: {e}")
-
-        if best_match["similarity"] >= SIMILARITY_THRESHOLD:
-            return best_match
-        else:
-            return {"nome": "Desconhecido", "email": None, "cpf": None, "similarity": 0.0}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao reconhecer usuário: {str(e)}")
-
 @app.post("/process-embedding/")
 async def process_embedding(request: Request):
     try:
         body = await request.json()
-        embedding_b64 = body.get("embedding")
+        embeddings_b64 = body.get("embeddings")
 
-        if not embedding_b64:
-            raise HTTPException(status_code=400, detail="Embedding não fornecido.")
-
-        input_vec = np.frombuffer(base64.b64decode(embedding_b64), dtype=np.float32)
-        input_vec = normalize_vector(input_vec)
-        print("[INFO] Novo embedding recebido e normalizado.")
+        if not embeddings_b64 or not isinstance(embeddings_b64, list):
+            raise HTTPException(status_code=400, detail="Lista de embeddings não fornecida ou inválida.")
+        
+        input_embeddings = [
+            normalize_vector(np.frombuffer(base64.b64decode(e), dtype=np.float32))
+            for e in embeddings_b64
+        ]
+        print(f"[INFO] Recebidos {len(input_embeddings)} embeddings para reconhecimento.")
 
         response = supabase.table("usuarios").select("*").execute()
         usuarios = response.data or []
 
         if not usuarios:
-            print("[WARN] Nenhum usuário cadastrado.")
-            return salvar_novo_usuario(embedding_b64)
+            print("[WARN] Nenhum usuário cadastrado. Salvando na pasta temporária...")
+            return salvar_embeddings_temporarios(embeddings_b64)
 
         best_match = None
         best_similarity = -1
 
-        print(f"[INFO] Comparando com {len(usuarios)} usuários cadastrados...")
-
         for u in usuarios:
-            try:
-                embedding_bytes = supabase.storage.from_("faces").download(u["embedding_path"])
-                user_vec = np.frombuffer(embedding_bytes, dtype=np.float32)
-                user_vec = normalize_vector(user_vec)
+            user_folder = u["embedding_path"]
+            files = supabase.storage.from_("faces").list(user_folder)
 
-                sim = float(np.dot(input_vec, user_vec))
-                print(f"[DEBUG] Comparando CPF {u['cpf']} -> Similaridade: {sim:.4f}")
+            for file_info in files:
+                file_name = file_info["name"]
+                embedding_bytes = supabase.storage.from_("faces").download(f"{user_folder}{file_name}")
+                user_vec = normalize_vector(np.frombuffer(embedding_bytes, dtype=np.float32))
 
-                if sim > best_similarity:
-                    best_similarity = sim
-                    best_match = u
-            except Exception as e:
-                print(f"[ERROR] Falha ao processar embedding de {u['cpf']}: {e}")
-                continue
+                for input_vec in input_embeddings:
+                    sim = float(np.dot(input_vec, user_vec))
+                    if sim > best_similarity:
+                        best_similarity = sim
+                        best_match = u
+
+                    print(f"[DEBUG] Comparando {u['cpf']} ({file_name}) -> Similaridade: {sim:.4f}")
 
         if best_similarity >= SIMILARITY_THRESHOLD:
-            print(f"[INFO] Usuário reconhecido: {best_match['nome']} "
-                  f"(CPF: {best_match['cpf']}) - Similaridade: {best_similarity:.4f}")
+            print(f"[INFO] Usuário reconhecido: {best_match['nome']} (CPF: {best_match['cpf']}) - Similaridade: {best_similarity:.4f}")
             return {
                 "status": "reconhecido",
                 "usuario": {
@@ -197,31 +191,32 @@ async def process_embedding(request: Request):
                     "similarity": best_similarity
                 }
             }
-
-        print(f"[WARN] Nenhum usuário reconhecido. Maior similaridade: {best_similarity:.4f}")
-        return salvar_novo_usuario(embedding_b64)
+            
+        print(f"[WARN] Nenhum usuário reconhecido. Similaridade máxima: {best_similarity:.4f}")
+        return salvar_embeddings_temporarios(embeddings_b64)
 
     except Exception as e:
-        print(f"[ERROR] Falha ao processar embedding: {e}")
+        print(f"[ERROR] Falha ao processar embeddings: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
-def salvar_novo_usuario(embedding_b64: str):
-    temp_id = str(uuid.uuid4())
-    caminho_temp = f"{temp_id}/embedding.bin"
-
+def salvar_embeddings_temporarios(embeddings_b64):
     try:
-        supabase.storage.from_("faces").upload(caminho_temp, base64.b64decode(embedding_b64))
-        print(f"[INFO] Usuário desconhecido - Embedding salvo em {caminho_temp}")
+        temp_id = str(uuid.uuid4())
+
+        for idx, emb_b64 in enumerate(embeddings_b64, start=1):
+            file_path = f"{temp_id}/embedding_{idx}.bin"
+            supabase.storage.from_("faces").upload(file_path, base64.b64decode(emb_b64))
+
+        print(f"[INFO] Embeddings salvos na pasta temporária: {temp_id}")
+
+        return {
+            "status": "desconhecido",
+            "temp_id": temp_id
+        }
+
     except Exception as e:
-        print(f"[ERROR] Falha ao salvar embedding temporário: {e}")
-        raise HTTPException(status_code=500, detail=f"Erro ao salvar embedding: {e}")
-
-    return {
-        "status": "desconhecido",
-        "redirect": f"/cadastro/?temp_file={temp_id}"
-    }
-
+        print(f"[ERROR] Falha ao salvar embeddings temporários: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/tela_informacoes/{cpf}", response_class=HTMLResponse)
 async def tela_informacoes(cpf: str):
@@ -235,15 +230,13 @@ async def tela_informacoes(cpf: str):
 
         return f"""
         <html>
-            <head>
-                <title>Informações do Usuário</title>
-            </head>
+            <head><title>Informações do Usuário</title></head>
             <body>
                 <h2>Usuário reconhecido com sucesso!</h2>
                 <p><strong>Nome:</strong> {usuario['nome']}</p>
                 <p><strong>Email:</strong> {usuario['email']}</p>
                 <p><strong>CPF:</strong> {usuario['cpf']}</p>
-                <p><strong>Embedding salvo em:</strong> {usuario['embedding_path']}</p>
+                <p><strong>Pasta de Embeddings:</strong> {usuario['embedding_path']}</p>
             </body>
         </html>
         """
