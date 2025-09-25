@@ -8,7 +8,7 @@ import numpy as np
 from numpy.linalg import norm
 
 SUPABASE_URL = "https://bngwnknyxmhkeesoeizb.supabase.co"
-SUPABASE_KEY = "SEU_SUPABASE_KEY_AQUI" 
+SUPABASE_KEY = "SEU_SUPABASE_KEY_AQUI"
 SIMILARITY_THRESHOLD = 0.85 
 EMBEDDINGS_DIR = "faces"
 

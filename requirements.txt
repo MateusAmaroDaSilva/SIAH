@@ -1,10 +1,21 @@
-fastapi # Construir a API principal
-uvicorn # Rodar o servidor da API
-sqlalchemy # Integração com banco relacional
-pydantic # Validar dados recebidos e enviados pela API
-requests # Enviar dados do captura.py para a API
-opencv-python # Capturar vídeo e processar imagens
-numpy # Manipular e calcular embeddings
-supabase # Manipular e calcular embeddings
-jinja2 # Gerar páginas HTML dinâmicas
-python-multipart # Permitir uploads e envio de formulários
+# Servidor da API
+fastapi                # Construir a API principal
+uvicorn[standard]      # Rodar o servidor da API com hot reload
+
+# Banco de dados e modelos
+sqlalchemy             # Integração com banco relacional
+pydantic               # Validar dados recebidos/enviados pela API
+python-multipart       # Para lidar com uploads/formulários multipart
+
+# Comunicação externa
+requests               # Enviar dados do captura.py para a API
+supabase               # Acesso ao Supabase (storage + banco)
+
+# Processamento de imagens
+opencv-python          # Capturar vídeo e processar imagens
+numpy                  # Manipulação de arrays, cálculos de embeddings
+face_recognition       # Reconhecimento facial robusto
+dlib                   # Dependência do face_recognition
+
+# Templates (se ainda usa)
+jinja2                 # Gerar páginas HTML dinâmicas

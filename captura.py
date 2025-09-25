@@ -10,13 +10,13 @@ from supabase import create_client, Client
 
 API_URL = "http://127.0.0.1:8000"
 SUPABASE_URL = "https://bngwnknyxmhkeesoeizb.supabase.co"
-SUPABASE_KEY = "SEU_SUPABASE_KEY_AQUI"
+SUPABASE_KEY = "SEU_SUPABASE_KEY_AQUI" 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 POSES = [
     "Olhe para frente",
-    "Vire a cabeça para a esquerda",
-    "Vire a cabeça para a direita"
+    "Vire para a esquerda",
+    "Vire para a direita"
 ]
 
 CAPTURE_DELAY = 1.0  
@@ -96,26 +96,28 @@ def start_recognition():
 
     if collected_embeddings:
         print(f"[INFO] Enviando {len(collected_embeddings)} embeddings para a API...")
-        response = requests.post(
-            f"{API_URL}/process-embedding/",
-            json={"embeddings": collected_embeddings}
-        )
+    
+    response = requests.post(
+        f"{API_URL}/process-embedding/",
+        json={"embeddings": collected_embeddings}
+    )
 
-        if response.status_code == 200:
-            data = response.json()
-            if data.get("status") == "reconhecido":
-                print(f"Usuário reconhecido: {data['usuario']['nome']} (CPF: {data['usuario']['cpf']})")
-                webbrowser.open(f"{API_URL}/tela_informacoes/{data['usuario']['cpf']}")
-            else:
-                temp_id = data.get("temp_id")
-                
-                
+    if response.status_code == 200:
+        data = response.json()
+        temp_id = None  
+
+        if data.get("status") == "reconhecido":
+            print(f"Usuário reconhecido: {data['usuario']['nome']} (CPF: {data['usuario']['cpf']})")
+            webbrowser.open(f"{API_URL}/tela_informacoes/{data['usuario']['cpf']}")
+        else:
+            temp_id = data.get("temp_id")
+            
             if temp_id:
                 redirect_url = f"{API_URL}/cadastro/?temp_file={temp_id}"
                 print("[INFO] Usuário não reconhecido. Redirecionando para cadastro...")
                 webbrowser.open(redirect_url)
-        else:
-            print(f"[ERRO] Falha na resposta da API: {response.status_code}")
+    else:
+        print(f"[ERRO] Falha na resposta da API: {response.status_code}")
 
 if __name__ == "__main__":
     print("Certifique-se de que a API está rodando antes de executar este script!")
