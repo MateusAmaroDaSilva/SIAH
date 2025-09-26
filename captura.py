@@ -10,13 +10,13 @@ from supabase import create_client, Client
 
 API_URL = "http://127.0.0.1:8000"
 SUPABASE_URL = "https://bngwnknyxmhkeesoeizb.supabase.co"
-SUPABASE_KEY = "SEU_SUPABASE_KEY_AQUI" 
+SUPABASE_KEY = "SEU_SUPABASE_KEY_AQUI"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 POSES = [
     "Olhe para frente",
     "Vire para a esquerda",
-    "Vire para a direita"
+    "Vire a cabeça para a direita"
 ]
 
 CAPTURE_DELAY = 1.0  
