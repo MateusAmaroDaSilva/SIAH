@@ -1,0 +1,28 @@
+.container {
+    max-width: 400px;
+    margin: 50px auto;
+    font-family: Arial, sans-serif;
+  }
+  
+  h2 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  p {
+    margin-bottom: 10px;
+  }
+  
+  strong {
+    font-weight: bold;
+  }
+  
+  p.error {
+    color: red;
+  }
+  
+  p.loading {
+    color: gray;
+    font-style: italic;
+  }
+  
