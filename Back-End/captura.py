@@ -9,6 +9,8 @@ import uuid
 from supabase import create_client, Client
 
 API_URL = "http://127.0.0.1:8000"
+FRONTEND_URL = "http://localhost:5174"
+
 SUPABASE_URL = "https://bngwnknyxmhkeesoeizb.supabase.co"
 SUPABASE_KEY = "SEU_SUPABASE_KEY_AQUI"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -123,17 +125,15 @@ def start_recognition():
         data = response.json()
         temp_id = None  
 
-        if data.get("status") == "reconhecido":
-            print(f"Usuário reconhecido: {data['usuario']['nome']} (CPF: {data['usuario']['cpf']})")
-            webbrowser.open(f"{API_URL}/tela_informacoes/{data['usuario']['cpf']}")
-        else:
-            temp_id = data.get("temp_id")
-            if temp_id:
-                redirect_url = f"{API_URL}/cadastro/?temp_file={temp_id}"
-                print("[INFO] Usuário não reconhecido. Redirecionando para cadastro...")
-                webbrowser.open(redirect_url)
+    if data.get("status") == "reconhecido":
+        webbrowser.open(f"{FRONTEND_URL}/informacoes/{data['usuario']['cpf']}")
     else:
-        print(f"[ERRO] Falha na resposta da API: {response.status_code}")
+        temp_id = data.get("temp_id")
+        if temp_id:
+            redirect_url = f"{FRONTEND_URL}/cadastro?temp_file={temp_id}"
+            print("[INFO] Usuário não reconhecido. Redirecionando para cadastro...")
+            webbrowser.open(redirect_url)   
+    
 
 if __name__ == "__main__":
     print("Certifique-se de que a API está rodando antes de executar este script!")

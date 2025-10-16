@@ -7,14 +7,28 @@ import base64
 import numpy as np
 from numpy.linalg import norm
 import json
+from fastapi.middleware.cors import CORSMiddleware
+
 
 SUPABASE_URL = "https://bngwnknyxmhkeesoeizb.supabase.co"
-SUPABASE_KEY = "SEU_SUPABASE_KEY_AQUI" 
+SUPABASE_KEY = "SEU_SUPABASE_KEY_AQUI"  
 SIMILARITY_THRESHOLD = 0.85 
 EMBEDDINGS_DIR = "faces"
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 app = FastAPI(title="API de Reconhecimento Facial")
+
+origins = [
+    "http://localhost:5174", 
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def normalize_vector(vec: np.ndarray) -> np.ndarray:
     norm_value = np.linalg.norm(vec)
@@ -46,26 +60,14 @@ class RecognizeResponse(BaseModel):
     cpf: str | None = None
     similarity: float
 
-@app.get("/cadastro/", response_class=HTMLResponse)
-def cadastro(temp_file: str = Query(..., description="Arquivo temporário com embedding")):
-    html_content = f"""
-    <html>
-        <head><title>Cadastro Usuário</title></head>
-        <body>
-            <h2>Usuário não reconhecido</h2>
-            <p>Arquivo temporário: {temp_file}</p>
-            <p>Preencha o cadastro para registrar sua face.</p>
-            <form action="/users/" method="post">
-                Nome: <input type="text" name="nome" required><br>
-                Email: <input type="email" name="email" required><br>
-                CPF: <input type="text" name="cpf" required><br>
-                <input type="hidden" name="temp_file" value="{temp_file}">
-                <input type="submit" value="Cadastrar">
-            </form>
-        </body>
-    </html>
-    """
-    return HTMLResponse(content=html_content)
+@app.post("/cadastro/")
+def cadastro_react(
+    nome: str = Form(...),
+    email: str = Form(...),
+    cpf: str = Form(...),
+    temp_file: str = Form(...)
+):
+    return create_user(nome, email, cpf, temp_file)
 
 @app.post("/users/", response_model=UserResponse)
 def create_user(nome: str = Form(...), email: str = Form(...), cpf: str = Form(...), temp_file: str = Form(...)):
@@ -233,28 +235,24 @@ def salvar_temporarios(embeddings_b64, images_b64):
 
     return {"status": "desconhecido", "temp_id": temp_id, "embeddings_paths": embeddings_paths, "images_paths": images_paths}
 
-@app.get("/tela_informacoes/{cpf}", response_class=HTMLResponse)
+@app.get("/tela_informacoes/{cpf}")
 async def tela_informacoes(cpf: str):
     try:
         response = supabase.table("usuarios").select("*").eq("cpf", cpf).execute()
 
         if not response.data:
-            return HTMLResponse(f"<h2>Usuário com CPF {cpf} não encontrado.</h2>", status_code=404)
+            raise HTTPException(status_code=404, detail=f"Usuário com CPF {cpf} não encontrado.")
 
         usuario = response.data[0]
 
-        return f"""
-        <html>
-            <head><title>Informações do Usuário</title></head>
-            <body>
-                <h2>Usuário reconhecido com sucesso!</h2>
-                <p><strong>Nome:</strong> {usuario['nome']}</p>
-                <p><strong>Email:</strong> {usuario['email']}</p>
-                <p><strong>CPF:</strong> {usuario['cpf']}</p>
-                <p><strong>Pasta de Embeddings:</strong> {usuario['embedding_path']}</p>
-            </body>
-        </html>
-        """
+        return {
+            "nome": usuario['nome'],
+            "email": usuario['email'],
+            "cpf": usuario['cpf'],
+            "embedding_path": usuario.get('embedding_path', None),
+            "images": usuario.get('images', [])
+        }
 
     except Exception as e:
-        return HTMLResponse(f"<h2>Erro ao carregar informações: {str(e)}</h2>", status_code=500)
+        raise HTTPException(status_code=500, detail=f"Erro ao carregar informações: {str(e)}")
+
