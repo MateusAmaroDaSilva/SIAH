@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import "./informacoes.css"; // importa o CSS
+import "./informacoes.css"; 
 
 function Informacoes() {
   const { cpf } = useParams();

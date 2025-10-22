@@ -1,46 +1,105 @@
+/* Container principal */
 .container {
-    max-width: 400px;
-    margin: 50px auto;
-    font-family: Arial, sans-serif;
+  max-width: 900px;
+  margin: 50px auto;
+  background-color: #f9fbfd;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-family: "Poppins", sans-serif;
+}
+
+/* Título */
+h2 {
+  text-align: center;
+  color: #004aad;
+  font-size: 2rem;
+  margin-bottom: 30px;
+}
+
+/* Estilo base dos campos */
+input,
+textarea,
+select {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 18px;
+  border: 1px solid #cfd8e3;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background-color: #fff;
+}
+
+/* Foco do input */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #004aad;
+  box-shadow: 0 0 4px rgba(0, 74, 173, 0.3);
+}
+
+/* Checkbox */
+label input[type="checkbox"] {
+  width: auto;
+  margin-right: 10px;
+  accent-color: #004aad;
+}
+
+/* Textarea */
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Botão */
+button {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.1rem;
+  background-color: #004aad;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+button:hover {
+  background-color: #003580;
+}
+
+/* Sessões de campo */
+.section-title {
+  margin-top: 40px;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #004aad;
+  border-left: 5px solid #004aad;
+  padding-left: 10px;
+}
+
+form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+textarea,
+.section-title,
+button {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 20px;
   }
-  
+
   h2 {
-    text-align: center;
-    margin-bottom: 20px;
+    font-size: 1.6rem;
   }
-  
-  label {
-    font-weight: bold;
-  }
-  
-  input[type="text"],
-  input[type="email"] {
-    width: 100%;
-    padding: 5px;
-    margin-top: 5px;
-    margin-bottom: 15px;
-    box-sizing: border-box;
-  }
-  
-  button {
-    width: 100%;
-    padding: 10px;
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-  }
-  
-  button:disabled {
-    background-color: #aaa;
-    cursor: not-allowed;
-  }
-  
-  p.error {
-    color: red;
-  }
-  
-  p.success {
-    color: green;
-  }
-  
+}

@@ -1,0 +1,101 @@
+.vaccines-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .vaccine-card {
+    background: var(--color-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .vaccine-card__header {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: rgba(241, 243, 247, 0.5);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  
+  .vaccine-card__header-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .vaccine-card__icon {
+    width: 20px;
+    height: 20px;
+    color: var(--color-primary);
+    flex-shrink: 0;
+  }
+  
+  .vaccine-card__title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-foreground);
+  }
+  
+  .vaccine-card__badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 500;
+    background: var(--color-secondary);
+    color: var(--color-secondary-foreground);
+  }
+  
+  .vaccine-card__content {
+    padding: var(--spacing-lg);
+  }
+  
+  .vaccine-card__grid {
+    display: grid;
+    gap: var(--spacing-md);
+    grid-template-columns: 1fr;
+  }
+  
+  @media (min-width: 768px) {
+    .vaccine-card__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  
+  .vaccine-card__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .vaccine-card__item-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--color-primary);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  
+  .vaccine-card__item-content {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .vaccine-card__label {
+    font-size: 0.75rem;
+    color: var(--color-muted-foreground);
+    margin-bottom: 0.25rem;
+  }
+  
+  .vaccine-card__value {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-foreground);
+  }
+  
+  .vaccine-card__value--small {
+    font-size: 0.75rem;
+    color: var(--color-muted-foreground);
+  }
+  
