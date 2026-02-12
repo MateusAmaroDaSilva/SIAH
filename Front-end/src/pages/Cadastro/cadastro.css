@@ -1,4 +1,3 @@
-/* Container principal */
 .container {
   max-width: 900px;
   margin: 50px auto;
@@ -9,7 +8,6 @@
   font-family: "Poppins", sans-serif;
 }
 
-/* Título */
 h2 {
   text-align: center;
   color: #004aad;
@@ -17,7 +15,6 @@ h2 {
   margin-bottom: 30px;
 }
 
-/* Estilo base dos campos */
 input,
 textarea,
 select {
@@ -31,7 +28,6 @@ select {
   background-color: #fff;
 }
 
-/* Foco do input */
 input:focus,
 textarea:focus,
 select:focus {
@@ -40,20 +36,17 @@ select:focus {
   box-shadow: 0 0 4px rgba(0, 74, 173, 0.3);
 }
 
-/* Checkbox */
 label input[type="checkbox"] {
   width: auto;
   margin-right: 10px;
   accent-color: #004aad;
 }
 
-/* Textarea */
 textarea {
   resize: vertical;
   min-height: 80px;
 }
 
-/* Botão */
 button {
   width: 100%;
   padding: 14px;
@@ -71,7 +64,6 @@ button:hover {
   background-color: #003580;
 }
 
-/* Sessões de campo */
 .section-title {
   margin-top: 40px;
   margin-bottom: 15px;
@@ -92,6 +84,26 @@ textarea,
 .section-title,
 button {
   grid-column: 1 / -1;
+}
+
+.foto-preview {
+text-align: center;
+margin-bottom: 20px;
+}
+
+.foto-preview h3{
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.foto-usuario{
+  width: 180px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid #4caf50;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); 
 }
 
 @media (max-width: 600px) {
